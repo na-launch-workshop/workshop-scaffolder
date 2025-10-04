@@ -1,0 +1,64 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: multi-skeleton
+  title: Multi Skeleton Project
+  description: Choose one or more pre-built skeleton repositories to seed your project.
+  tags:
+    - skeleton
+    - multi-repo
+spec:
+  owner: user:default/guest
+  type: service
+  parameters:
+    - title: Project Skeletons
+      description: Select one or more skeleton repositories.
+      properties:
+        skeletons:
+          title: Skeleton selections
+          type: array
+          minItems: 1
+          maxItems: 5
+          items:
+            type: object
+            required:
+              - repoUrl
+            properties:
+              repoUrl:
+                title: Repository
+                type: string
+                enum:
+                  - https://github.com/na-launch-workshop/hello-quarkus
+                  - https://github.com/na-launch-workshop/node-rest
+                  - https://github.com/na-launch-workshop/python-ml
+                enumNames:
+                  - Quarkus Quickstart
+                  - Node REST API
+                  - Python ML Service
+              branch:
+                title: Branch
+                type: string
+                default: main
+      uiSchema:
+        skeletons:
+          'ui:options':
+            addable: true
+            orderable: true
+            removable: true
+            itemLabel: '{{ item.repoUrl }}'
+  steps:
+    - id: clone-skeletons
+      name: Fetch skeleton repositories
+      action: fetch:template
+      each: ${{ parameters.skeletons }}
+      if: ${{ parameters.skeletons }}
+      input:
+        url: '{{ each.repoUrl }}'
+        targetPath: 'skeletons/{{ each.repoUrl | replace("https://github.com/na-launch-workshop/", "") }}'
+        values:
+          branch: '{{ each.branch }}'
+  output:
+    text:
+      - title: Selected skeletons
+        content: |
+          {{ parameters.skeletons | dump }}
